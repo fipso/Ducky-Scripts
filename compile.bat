@@ -8,3 +8,4 @@ echo.
 echo.
 PAUSE
 cls
+exit
